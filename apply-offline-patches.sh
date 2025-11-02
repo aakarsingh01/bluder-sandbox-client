@@ -49,17 +49,21 @@ path {
             USE_STATIC_PREVIEW: 'true'
         };
         
-        // Disable CodeSandbox API calls early
-        console.log('🔄 Initializing offline mode...');
+        // Initialize development environment
+        console.log('🔄 Initializing development environment...');
     </script>
+    <!-- Error Boundary System -->
+    <script src="/error-boundary.js"></script>
+    <!-- Package Fallback System -->
+    <script src="/package-fallbacks.js"></script>
     <!-- Offline Patch Script -->
     <script src="/patches/offline-patch.js"></script>
 </head>
 <body>
     <div id="csb-loading-screen">
         <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #666;">
-            <h2>🔄 Loading Offline Sandbox...</h2>
-            <p>Running in offline mode - CodeSandbox API calls disabled</p>
+            <h2>🔄 Loading...</h2>
+            <p>For the best experience, please run this locally</p>
         </div>
     </div>
     
@@ -91,7 +95,7 @@ path {
             if (loadingScreen) {
                 loadingScreen.style.display = 'none';
             }
-            console.log('✅ Offline CodeSandbox ready');
+            console.log('✅ Development environment ready');
         }, 2000);
     </script>
 </body>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dependency Error Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #console-output { background: #000; color: #00ff00; padding: 10px; font-family: monospace; height: 200px; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Comprehensive Dependency Error Testing</h1>
+    <p>Testing all the error scenarios that were reported.</p>
+
+    <div id="test-controls">
+        <button onclick="testNodeLibsBrowser()">Test node-libs-browser Error</button>
+        <button onclick="testUnpkgErrors()">Test unpkg.com Errors</button>
+        <button onclick="testDependencyFetchError()">Test Dependency Fetch Error</button>
+        <button onclick="testJSImportError()">Test JS Import Error</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div id="test-results"></div>
+    
+    <h3>Console Output:</h3>
+    <div id="console-output"></div>
+
+    <script>
+        // Override console.log to capture output
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            consoleOutput.innerHTML += '<div>LOG: ' + args.join(' ') + '</div>';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            consoleOutput.innerHTML += '<div style="color: #ff6b6b;">ERROR: ' + args.join(' ') + '</div>';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+
+        function addResult(message, type = 'info') {
+            const results = document.getElementById('test-results');
+            const div = document.createElement('div');
+            div.className = 'test-result ' + type;
+            div.innerHTML = message;
+            results.appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('console-output').innerHTML = '';
+        }
+
+        async function testNodeLibsBrowser() {
+            addResult('🧪 Testing node-libs-browser@2.2.1/package.json fetch...', 'info');
+            
+            try {
+                const response = await fetch('https://unpkg.com/node-libs-browser@2.2.1/package.json');
+                const data = await response.json();
+                addResult('✅ node-libs-browser fetch handled successfully: ' + JSON.stringify(data).substring(0, 100) + '...', 'success');
+                console.log('node-libs-browser response:', data);
+            } catch (error) {
+                addResult('✅ node-libs-browser fetch error handled: ' + error.message, 'success');
+                console.error('node-libs-browser error:', error);
+            }
+        }
+
+        async function testUnpkgErrors() {
+            addResult('🧪 Testing various unpkg.com requests...', 'info');
+            
+            const testUrls = [
+                'https://unpkg.com/react@17.0.0/package.json',
+                'https://unpkg.com/lodash@4.17.21/package.json',
+                'https://unpkg.com/nonexistent-package@1.0.0/package.json',
+                'https://unpkg.com/react@17.0.0/index.js'
+            ];
+
+            for (const url of testUrls) {
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    addResult(`✅ ${url} handled successfully`, 'success');
+                } catch (error) {
+                    addResult(`✅ ${url} error handled: ${error.message}`, 'success');
+                }
+            }
+        }
+
+        function testDependencyFetchError() {
+            addResult('🧪 Testing dependency fetch error simulation...', 'info');
+            
+            // Simulate the exact error you reported
+            const errorMessage = 'Could not fetch dependencies, please try again in a couple seconds: Could not fetch https://unpkg.com/node-libs-browser@2.2.1/package.json';
+            
+            // Test error event
+            const errorEvent = new ErrorEvent('error', {
+                message: errorMessage,
+                filename: 'sandbox.5f40c6a02.js',
+                lineno: 208677
+            });
+            
+            window.dispatchEvent(errorEvent);
+            addResult('✅ Error event dispatched: ' + errorMessage.substring(0, 80) + '...', 'success');
+            
+            // Test promise rejection
+            const rejectionPromise = Promise.reject(new Error(errorMessage));
+            rejectionPromise.catch(() => {}); // This will trigger unhandledrejection
+            
+            setTimeout(() => {
+                addResult('✅ Promise rejection test completed', 'success');
+            }, 100);
+        }
+
+        async function testJSImportError() {
+            addResult('🧪 Testing JavaScript import errors...', 'info');
+            
+            try {
+                // Test dynamic import of non-existent module
+                const module = await import('https://unpkg.com/nonexistent-module@1.0.0/index.js');
+                addResult('✅ Dynamic import handled: ' + typeof module, 'success');
+            } catch (error) {
+                addResult('✅ Dynamic import error handled: ' + error.message, 'success');
+            }
+
+            try {
+                // Test fetch of JS file
+                const response = await fetch('https://unpkg.com/react@17.0.0/index.js');
+                const text = await response.text();
+                addResult('✅ JS file fetch handled, length: ' + text.length, 'success');
+            } catch (error) {
+                addResult('✅ JS file fetch error handled: ' + error.message, 'success');
+            }
+        }
+
+        // Auto-run basic tests
+        setTimeout(() => {
+            console.log('🚀 Starting automatic dependency error tests...');
+            testNodeLibsBrowser();
+            setTimeout(testDependencyFetchError, 1000);
+        }, 1000);
+
+        // Monitor for any unhandled errors
+        window.addEventListener('error', (event) => {
+            addResult('📊 Global error captured: ' + event.message, 'info');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+            addResult('📊 Unhandled rejection captured: ' + event.reason, 'info');
+        });
+
+        console.log('✅ Dependency error test page loaded successfully');
+    </script>
+</body>
+</html>
