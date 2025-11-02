@@ -1,7 +1,16 @@
 // Offline Service Worker for CodeSandbox
-// Intercepts and blocks external API calls
+// Intercepts and blocks external API calls, allows all CORS
 
 const CACHE_NAME = 'offline-codesandbox-v1';
+
+// Headers to make all responses CORS-permissive
+const getCORSHeaders = () => ({
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD',
+  'Access-Control-Allow-Headers': '*',
+  'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Max-Age': '86400'
+});
 
 // URLs to block (CodeSandbox infrastructure)
 const BLOCKED_PATTERNS = [
@@ -33,7 +42,7 @@ const getMockResponse = (url) => {
       status: 'offline_mode'
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', ...getCORSHeaders() }
     });
   }
   
@@ -45,7 +54,7 @@ const getMockResponse = (url) => {
       offline: true
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', ...getCORSHeaders() }
     });
   }
   
@@ -63,7 +72,7 @@ const getMockResponse = (url) => {
       registry_url: 'https://registry.npmjs.org/'
     }), {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json', ...getCORSHeaders() }
     });
   }
   
@@ -82,7 +91,7 @@ const getMockResponse = (url) => {
     offline_mode: true
   }), { 
     status: 200,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json', ...getCORSHeaders() }
   });
 };
 
@@ -109,19 +118,63 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Allow npm registry and other legitimate requests
+  // Allow npm registry and other legitimate requests with CORS headers
   if (url.includes('registry.npmjs.org') || 
       url.includes('unpkg.com') || 
       url.includes('cdn.skypack.dev') ||
       url.includes('esm.sh')) {
-    event.respondWith(fetch(event.request));
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Clone the response to add CORS headers
+          const newHeaders = new Headers(response.headers);
+          Object.entries(getCORSHeaders()).forEach(([key, value]) => {
+            newHeaders.set(key, value);
+          });
+          
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+          });
+        })
+        .catch(() => fetch(event.request))
+    );
     return;
   }
   
-  // For local requests, try cache first, then network
+  // For local requests, try cache first, then network (with CORS headers)
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request).catch(() => {
+      if (response) {
+        // Add CORS headers to cached responses
+        const newHeaders = new Headers(response.headers);
+        Object.entries(getCORSHeaders()).forEach(([key, value]) => {
+          newHeaders.set(key, value);
+        });
+        
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: newHeaders
+        });
+      }
+      
+      return fetch(event.request)
+        .then(networkResponse => {
+          // Add CORS headers to network responses
+          const newHeaders = new Headers(networkResponse.headers);
+          Object.entries(getCORSHeaders()).forEach(([key, value]) => {
+            newHeaders.set(key, value);
+          });
+          
+          return new Response(networkResponse.body, {
+            status: networkResponse.status,
+            statusText: networkResponse.statusText,
+            headers: newHeaders
+          });
+        })
+        .catch(() => {
         // Return a generic offline response for failed requests
         return new Response('Offline', { status: 503 });
       });
