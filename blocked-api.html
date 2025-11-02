@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSandbox - Offline Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: 20px;
+        }
+        
+        .icon {
+            font-size: 64px;
+            color: #f7931e;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        
+        .feature-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .feature-list ul {
+            list-style: none;
+            text-align: left;
+        }
+        
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .feature-list li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .download-link {
+            display: inline-block;
+            background: #f7931e;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .download-link:hover {
+            background: #e6831d;
+        }
+        
+        .code {
+            background: #f1f3f4;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .status {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-title {
+            font-weight: 600;
+            color: #0066cc;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📦</div>
+        <h1>CodeSandbox - Running in Offline Mode</h1>
+        
+        <div class="status">
+            <div class="status-title">🚫 External API Blocked</div>
+            <p>This CodeSandbox instance is configured to run completely offline. External CodeSandbox APIs have been blocked for security and privacy.</p>
+        </div>
+        
+        <p>You are accessing a locally hosted version of CodeSandbox that:</p>
+        
+        <div class="feature-list">
+            <ul>
+                <li>Works entirely offline without internet connectivity</li>
+                <li>Blocks all external CodeSandbox API calls</li>
+                <li>Allows NPM package installation from registry</li>
+                <li>Provides a secure, isolated development environment</li>
+                <li>Runs completely on your local infrastructure</li>
+            </ul>
+        </div>
+        
+        <p>To use this offline CodeSandbox:</p>
+        
+        <div class="code">
+# Run with Docker Compose
+docker-compose up
+
+# Or build and run manually
+docker build -t codesandbox-offline .
+docker run -p 3000:80 codesandbox-offline
+        </div>
+        
+        <p><strong>Note:</strong> Some features requiring external CodeSandbox services (authentication, cloud sync, templates) are intentionally disabled in this offline version.</p>
+        
+        <a href="/" class="download-link">← Back to CodeSandbox</a>
+    </div>
+</body>
+</html>

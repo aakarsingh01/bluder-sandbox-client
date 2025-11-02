@@ -1,4 +1,11 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sandbox - CodeSandbox</title><link rel="manifest" href="/manifest.json"><link href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Offline Sandbox - CodeSandbox</title>
+    <link rel="manifest" href="/manifest.json">
+    <link href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
 <style>
 svg {
 background: transparent;
@@ -13,4 +20,64 @@ path {
 }
 </style>
 <path fill-rule='evenodd' clip-rule='evenodd' d='M81.8182 18.1818V81.8182H18.1818V18.1818H81.8182ZM10 90V10H90V90H10Z'/>
-</svg>" rel="icon"/><link rel="mask-icon" href="/csb-ios.svg" color="#fff"><script src="/static/browserfs12/browserfs.min.js" type="text/javascript"></script><script>window.process=BrowserFS.BFSRequire("process"),window.Buffer=BrowserFS.BFSRequire("buffer").Buffer</script></head><body><div id="csb-loading-screen"></div><script src="/static/js/vendors~sandbox.ecbcf4e6a.chunk.js" crossorigin="anonymous"></script><script src="/static/js/default~sandbox~sandbox-startup.19e4d6b87.chunk.js" crossorigin="anonymous"></script><script src="/static/js/sandbox.5f40c6a02.js" crossorigin="anonymous"></script><script src="/static/js/vendors~sandbox-startup.ca8a95b40.chunk.js" crossorigin="anonymous"></script><script src="/static/js/sandbox-startup.a0ea8d1cb.js" crossorigin="anonymous"></script></body></html>
+</svg>" rel="icon"/>
+    <link rel="mask-icon" href="/csb-ios.svg" color="#fff">
+    <script src="/static/browserfs12/browserfs.min.js" type="text/javascript"></script>
+    <script>
+        window.process = BrowserFS.BFSRequire("process");
+        window.Buffer = BrowserFS.BFSRequire("buffer").Buffer;
+        
+        // Set offline environment variables
+        window._env_ = {
+            IS_ONPREM: 'true',
+            OFFLINE_MODE: 'true',
+            USE_STATIC_PREVIEW: 'true'
+        };
+        
+        // Disable CodeSandbox API calls early
+        console.log('🔄 Initializing offline mode...');
+    </script>
+    <!-- Offline Patch Script -->
+    <script src="/patches/offline-patch.js"></script>
+</head>
+<body>
+    <div id="csb-loading-screen">
+        <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #666;">
+            <h2>🔄 Loading Offline Sandbox...</h2>
+            <p>Running in offline mode - CodeSandbox API calls disabled</p>
+        </div>
+    </div>
+    
+    <!-- Register offline service worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/patches/offline-sw.js')
+                .then(registration => {
+                    console.log('✅ Offline service worker registered');
+                })
+                .catch(error => {
+                    console.log('❌ Service worker registration failed:', error);
+                });
+        }
+    </script>
+    
+    <!-- Original scripts -->
+    <script src="/static/js/vendors~sandbox.ecbcf4e6a.chunk.js" crossorigin="anonymous"></script>
+    <script src="/static/js/default~sandbox~sandbox-startup.19e4d6b87.chunk.js" crossorigin="anonymous"></script>
+    <script src="/static/js/sandbox.5f40c6a02.js" crossorigin="anonymous"></script>
+    <script src="/static/js/vendors~sandbox-startup.ca8a95b40.chunk.js" crossorigin="anonymous"></script>
+    <script src="/static/js/sandbox-startup.a0ea8d1cb.js" crossorigin="anonymous"></script>
+    
+    <!-- Additional offline initialization -->
+    <script>
+        // Remove loading screen after a delay
+        setTimeout(() => {
+            const loadingScreen = document.getElementById('csb-loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+            console.log('✅ Offline CodeSandbox ready');
+        }, 2000);
+    </script>
+</body>
+</html>

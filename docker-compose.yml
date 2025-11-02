@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  codesandbox-offline:
+    build: .
+    container_name: codesandbox-offline
+    ports:
+      - "8080:80"
+    environment:
+      - IS_ONPREM=true
+      - OFFLINE_MODE=true
+      - USE_STATIC_PREVIEW=true
+    volumes:
+      # Optional: Mount a directory for persistent file storage
+      - ./workspace:/usr/share/nginx/html/workspace
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.codesandbox.rule=Host(`codesandbox.local`)"
+      - "traefik.http.services.codesandbox.loadbalancer.server.port=80"
+    networks:
+      - codesandbox-network
+
+networks:
+  codesandbox-network:
+    driver: bridge
+
+volumes:
+  workspace:
+    driver: local
