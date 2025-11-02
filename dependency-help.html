@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeSandbox - Dependency Resolution Help</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 20px;
+        }
+        
+        .icon {
+            font-size: 64px;
+            color: #f7931e;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .status {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .status-title {
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 8px;
+        }
+        
+        .solution {
+            background: #d1ecf1;
+            border: 1px solid #b6d4db;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: left;
+        }
+        
+        .solution h3 {
+            color: #0c5460;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .code {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+            text-align: left;
+            overflow-x: auto;
+        }
+        
+        .back-link {
+            display: inline-block;
+            background: #f7931e;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .back-link:hover {
+            background: #e6831d;
+        }
+        
+        .tip {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 15px 0;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📦</div>
+        <h1>Please Run This Locally</h1>
+        
+        <div class="status">
+            <div class="status-title">💡 Better Development Experience</div>
+            <p>For reliable dependency management and faster performance, please run this project on your local machine.</p>
+        </div>
+        
+        <div class="solution">
+            <h3>🚀 Recommended: Local Development</h3>
+            <p>Run this project locally for the best experience:</p>
+        <div class="code">
+# Clone or download the project
+git clone &lt;repository-url&gt;
+cd your-project
+
+# Install dependencies
+npm install
+
+# Start development server
+npm start
+
+# Open in browser (usually http://localhost:3000)
+        </div>
+        
+        <div class="solution">
+            <h3>⚡ Alternative: CDN Imports</h3>
+            <p>If you need a quick solution, use CDN imports:</p>
+            <div class="code">
+// Import directly from CDNs
+import React from 'https://esm.sh/react';
+import lodash from 'https://cdn.skypack.dev/lodash';
+            </div>
+        </div>
+        </div>
+        
+        <div class="tip">
+            <strong>💡 Tip:</strong> Running locally gives you access to the full npm ecosystem, faster builds, and better debugging tools for a superior development experience.
+        </div>
+        
+        <a href="/" class="back-link">← Back to CodeSandbox</a>
+    </div>
+    
+    <script>
+        // Auto-refresh after 10 seconds if coming from an error
+        if (document.referrer.includes('/api/')) {
+            setTimeout(() => {
+                window.history.back();
+            }, 10000);
+        }
+    </script>
+</body>
+</html>

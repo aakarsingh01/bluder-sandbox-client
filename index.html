@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Offline Sandbox - CodeSandbox</title>
+    <title>Development Environment</title>
     <link rel="manifest" href="/manifest.json">
     <link href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
 <style>
@@ -34,8 +34,8 @@ path {
             USE_STATIC_PREVIEW: 'true'
         };
         
-        // Disable CodeSandbox API calls early
-        console.log('🔄 Initializing offline mode...');
+        // Initialize development environment
+        console.log('🔄 Initializing development environment...');
     </script>
     <!-- Offline Patch Script -->
     <script src="/patches/offline-patch.js"></script>
@@ -43,17 +43,17 @@ path {
 <body>
     <div id="csb-loading-screen">
         <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: #666;">
-            <h2>🔄 Loading Offline Sandbox...</h2>
-            <p>Running in offline mode - CodeSandbox API calls disabled</p>
+            <h2>🔄 Loading...</h2>
+            <p>For the best experience, please run this locally</p>
         </div>
     </div>
     
-    <!-- Register offline service worker -->
+    <!-- Register service worker -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/patches/offline-sw.js')
                 .then(registration => {
-                    console.log('✅ Offline service worker registered');
+                    console.log('✅ Service worker registered');
                 })
                 .catch(error => {
                     console.log('❌ Service worker registration failed:', error);
@@ -61,14 +61,14 @@ path {
         }
     </script>
     
-    <!-- Original scripts -->
+    <!-- Application scripts -->
     <script src="/static/js/vendors~sandbox.ecbcf4e6a.chunk.js" crossorigin="anonymous"></script>
     <script src="/static/js/default~sandbox~sandbox-startup.19e4d6b87.chunk.js" crossorigin="anonymous"></script>
     <script src="/static/js/sandbox.5f40c6a02.js" crossorigin="anonymous"></script>
     <script src="/static/js/vendors~sandbox-startup.ca8a95b40.chunk.js" crossorigin="anonymous"></script>
     <script src="/static/js/sandbox-startup.a0ea8d1cb.js" crossorigin="anonymous"></script>
     
-    <!-- Additional offline initialization -->
+    <!-- Additional initialization -->
     <script>
         // Remove loading screen after a delay
         setTimeout(() => {
@@ -76,7 +76,7 @@ path {
             if (loadingScreen) {
                 loadingScreen.style.display = 'none';
             }
-            console.log('✅ Offline CodeSandbox ready');
+            console.log('✅ Development environment ready');
         }, 2000);
     </script>
 </body>

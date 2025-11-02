@@ -122,37 +122,43 @@
 <body>
     <div class="container">
         <div class="icon">📦</div>
-        <h1>CodeSandbox - Running in Offline Mode</h1>
+        <h1>Please Run This Locally</h1>
         
         <div class="status">
-            <div class="status-title">🚫 External API Blocked</div>
-            <p>This CodeSandbox instance is configured to run completely offline. External CodeSandbox APIs have been blocked for security and privacy.</p>
+            <div class="status-title">💡 Better Experience Available</div>
+            <p>For the best development experience, please run this project on your local machine.</p>
         </div>
         
-        <p>You are accessing a locally hosted version of CodeSandbox that:</p>
+        <p><strong>Why run locally?</strong> You'll get:</p>
         
         <div class="feature-list">
             <ul>
-                <li>Works entirely offline without internet connectivity</li>
-                <li>Blocks all external CodeSandbox API calls</li>
-                <li>Allows NPM package installation from registry</li>
-                <li>Provides a secure, isolated development environment</li>
-                <li>Runs completely on your local infrastructure</li>
+                <li>Full dependency management with npm/yarn</li>
+                <li>Faster performance and better stability</li>
+                <li>Complete access to all features and tools</li>
+                <li>No network limitations or API blocks</li>
+                <li>Your preferred code editor and extensions</li>
             </ul>
         </div>
         
-        <p>To use this offline CodeSandbox:</p>
+        <p><strong>How to run locally:</strong></p>
         
         <div class="code">
-# Run with Docker Compose
-docker-compose up
+# 1. Download or clone the project
+git clone &lt;repository-url&gt;
+cd your-project
 
-# Or build and run manually
-docker build -t codesandbox-offline .
-docker run -p 3000:80 codesandbox-offline
+# 2. Install dependencies
+npm install
+
+# 3. Start the development server
+npm start
+
+# 4. Open in your browser
+# Usually http://localhost:3000
         </div>
         
-        <p><strong>Note:</strong> Some features requiring external CodeSandbox services (authentication, cloud sync, templates) are intentionally disabled in this offline version.</p>
+        <p><strong>Need help?</strong> Local development gives you the full experience with faster performance and all features working seamlessly.</p>
         
         <a href="/" class="download-link">← Back to CodeSandbox</a>
     </div>

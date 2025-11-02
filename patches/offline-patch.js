@@ -3,6 +3,70 @@
 
 console.log('Applying offline patches to CodeSandbox build...');
 
+// Global error handler for graceful error messages
+window.addEventListener('error', function(event) {
+  console.log('🚫 Global error caught:', event.error);
+  
+  // Show user-friendly error message
+  if (event.error && (
+    event.error.message.includes('fetch') ||
+    event.error.message.includes('network') ||
+    event.error.message.includes('dependencies') ||
+    event.error.message.includes('Cannot resolve')
+  )) {
+    showLocalDevelopmentMessage('An error occurred while loading resources');
+  }
+});
+
+// Global promise rejection handler
+window.addEventListener('unhandledrejection', function(event) {
+  console.log('🚫 Unhandled promise rejection:', event.reason);
+  
+  if (event.reason && typeof event.reason === 'string' && (
+    event.reason.includes('fetch') ||
+    event.reason.includes('network') ||
+    event.reason.includes('dependencies')
+  )) {
+    showLocalDevelopmentMessage('Failed to load required resources');
+    event.preventDefault(); // Prevent the default unhandled rejection behavior
+  }
+});
+
+// Function to show local development message
+function showLocalDevelopmentMessage(errorType) {
+  // Create or update error message overlay
+  let errorOverlay = document.getElementById('offline-error-overlay');
+  if (!errorOverlay) {
+    errorOverlay = document.createElement('div');
+    errorOverlay.id = 'offline-error-overlay';
+    errorOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #e3f2fd;
+      border-bottom: 1px solid #bbdefb;
+      padding: 16px;
+      text-align: center;
+      z-index: 10000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      color: #1565c0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    `;
+    document.body.appendChild(errorOverlay);
+  }
+  
+  errorOverlay.innerHTML = `
+    <div>
+      <strong>💡 For the best experience</strong><br>
+      <span>Please run this project locally on your computer.</span>
+      <a href="/dependency-help.html" style="margin-left: 10px; color: #1976d2;">View Setup Guide →</a>
+      <button onclick="this.parentElement.parentElement.style.display='none'" style="margin-left: 10px; background: none; border: 1px solid #1565c0; color: #1565c0; padding: 4px 8px; border-radius: 4px; cursor: pointer;">×</button>
+    </div>
+  `;
+}
+
 // Completely disable CORS restrictions
 console.log('🔓 Disabling all CORS restrictions...');
 
@@ -69,15 +133,14 @@ window.fetch = function(url, options = {}) {
     // Return user-friendly responses for blocked endpoints
     if (urlStr.includes('/api/v1/sandboxes/') && !urlStr.includes('/cache')) {
       return Promise.resolve(new Response(JSON.stringify({
-        error: 'Cannot render the page',
-        message: 'This CodeSandbox instance is running in offline mode. Please download and run the sandbox locally.',
-        suggestion: 'Download the project files and run them in your local development environment.',
-        local_alternatives: [
-          'Use VS Code with Live Server extension',
-          'Run with Node.js and npm/yarn',
-          'Use local development servers like Vite, Webpack, or Parcel'
-        ],
-        status: 'offline'
+        message: 'Please run this locally',
+        instruction: 'For the best development experience, run this project on your local machine.',
+        setup_steps: [
+          'Download or clone the project',
+          'Run: npm install',
+          'Run: npm start',
+          'Open in your browser'
+        ]
       }), { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }
@@ -107,6 +170,69 @@ window.fetch = function(url, options = {}) {
         registry_auth_key: '',
         registry_type: 'npm',
         registry_url: 'https://registry.npmjs.org/'
+      }), { 
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }
+    
+    // Handle dependency resolution requests
+    if (urlStr.includes('/api/v1/dependencies') || urlStr.includes('/api/v1/sandpack/dependencies')) {
+      console.log('🔄 Redirecting dependency request to NPM registry');
+      
+      // Extract package name from URL if possible
+      const packageMatch = urlStr.match(/\/dependencies\/([^\/]+)/);
+      if (packageMatch) {
+        const packageName = packageMatch[1];
+        // Redirect to NPM registry API
+        return originalFetch(`https://registry.npmjs.org/${packageName}`, {
+          ...options,
+          mode: 'cors'
+        }).then(response => {
+          if (response.ok) {
+            return response;
+          }
+          // Fallback response if NPM fails
+          return new Response(JSON.stringify({
+            message: 'Please run this locally',
+            instruction: 'For reliable dependency management, run this project on your local machine.',
+            setup_steps: [
+              'Download or clone the project',
+              'Run: npm install',
+              'Run: npm start',
+              'Enjoy faster performance and full functionality'
+            ]
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }).catch(() => {
+          return new Response(JSON.stringify({
+            message: 'Please run this locally',
+            instruction: 'For the best development experience, run this project on your local machine.',
+            setup_steps: [
+              'Download the project',
+              'Open terminal in project folder',
+              'Run: npm install',
+              'Run: npm start'
+            ]
+          }), {
+            status: 503,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        });
+      }
+      
+      // Generic dependency response
+      return Promise.resolve(new Response(JSON.stringify({
+        message: 'Please run this locally',
+        instruction: 'For better performance and full functionality, run this project on your local machine.',
+        setup_steps: [
+          'Download the project',
+          'Run: npm install',
+          'Run: npm start',
+          'Enjoy faster development!'
+        ]
       }), { 
         status: 200,
         headers: { 'Content-Type': 'application/json' }

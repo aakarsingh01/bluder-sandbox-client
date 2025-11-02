@@ -6,13 +6,21 @@
     "api_calls": false,
     "authentication": false,
     "telemetry": false,
-    "external_packages": true
+    "external_packages": true,
+    "dependency_resolution": true,
+    "npm_install": true
   },
   "npm_registry": "https://registry.npmjs.org/",
+  "fallback_registry": "https://unpkg.com/",
   "allowed_domains": [
     "registry.npmjs.org",
     "unpkg.com",
     "cdn.skypack.dev",
-    "esm.sh"
-  ]
+    "esm.sh",
+    "jsdelivr.net"
+  ],
+  "dependency_sources": {
+    "primary": "npm",
+    "fallback": ["unpkg", "jsdelivr", "skypack"]
+  }
 }
