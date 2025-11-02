@@ -3,6 +3,79 @@
 
 console.log('Applying offline patches to CodeSandbox build...');
 
+// Global error safety wrapper
+(function() {
+  'use strict';
+  
+  // Comprehensive error handling for missing modules/dependencies
+  const originalRequire = window.require;
+  if (typeof window.require === 'function') {
+    window.require = function(id) {
+      try {
+        return originalRequire(id);
+      } catch (error) {
+        console.log('Module not found:', id, 'providing fallback');
+        return createModuleFallback(id);
+      }
+    };
+  }
+  
+  // Create fallback for missing modules
+  function createModuleFallback(moduleId) {
+    // Common fallbacks for popular modules
+    const fallbacks = {
+      'react': { createElement: function() { return null; }, Component: function() {} },
+      'react-dom': { render: function() {}, createRoot: function() { return { render: function() {} }; } },
+      'lodash': {},
+      'axios': { get: function() { return Promise.resolve({}); }, post: function() { return Promise.resolve({}); } },
+      'moment': function() { return { format: function() { return new Date().toString(); } }; }
+    };
+    
+    // Return specific fallback or generic object
+    return fallbacks[moduleId] || {};
+  }
+  
+  // Override import function to handle missing modules
+  if (typeof window.$csbImport === 'undefined') {
+    window.$csbImport = function(specifier) {
+      return new Promise((resolve) => {
+        try {
+          // Try to resolve the module
+          resolve(createModuleFallback(specifier));
+        } catch (error) {
+          console.log('Dynamic import failed for:', specifier);
+          resolve(createModuleFallback(specifier));
+        }
+      });
+    };
+  }
+  
+  // Wrap console errors to prevent breaking
+  const originalConsoleError = console.error;
+  console.error = function(...args) {
+    try {
+      originalConsoleError.apply(console, args);
+    } catch (e) {
+      // Fallback if console.error fails
+      try {
+        console.log('Error:', ...args);
+      } catch (e2) {
+        // Last resort - do nothing to prevent breaking
+      }
+    }
+  };
+  
+  // Handle script loading errors
+  window.addEventListener('error', function(event) {
+    if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
+      console.log('Resource failed to load:', event.target.src || event.target.href);
+      showLocalDevelopmentMessage('Some resources failed to load');
+      return true; // Prevent default error handling
+    }
+  });
+  
+})();
+
 // Global error handler for graceful error messages
 window.addEventListener('error', function(event) {
   console.log('🚫 Global error caught:', event.error);
@@ -22,12 +95,18 @@ window.addEventListener('error', function(event) {
 window.addEventListener('unhandledrejection', function(event) {
   console.log('🚫 Unhandled promise rejection:', event.reason);
   
-  if (event.reason && typeof event.reason === 'string' && (
-    event.reason.includes('fetch') ||
-    event.reason.includes('network') ||
-    event.reason.includes('dependencies')
-  )) {
-    showLocalDevelopmentMessage('Failed to load required resources');
+  // Check for dependency fetch errors specifically
+  const errorMessage = event.reason && event.reason.message ? event.reason.message : String(event.reason || '');
+  
+  if (errorMessage.includes('Could not fetch dependencies') ||
+      errorMessage.includes('Could not fetch https://unpkg.com') ||
+      errorMessage.includes('node-libs-browser') ||
+      errorMessage.includes('fetch') ||
+      errorMessage.includes('network') ||
+      errorMessage.includes('dependencies')) {
+    
+    console.log('💻 Dependency fetch error detected - showing local development message');
+    showLocalDevelopmentMessage('Could not fetch dependencies - please run locally');
     event.preventDefault(); // Prevent the default unhandled rejection behavior
   }
 });
@@ -109,6 +188,30 @@ const originalFetch = window.fetch;
 window.fetch = function(url, options = {}) {
   const urlStr = typeof url === 'string' ? url : url.toString();
   
+  // Early check for node-libs-browser specifically (addresses the exact error shown)
+  if (urlStr.includes('node-libs-browser')) {
+    console.log('💻 Intercepting node-libs-browser request - providing local development message');
+    showLocalDevelopmentMessage('Could not fetch node-libs-browser dependencies');
+    
+    if (urlStr.includes('package.json')) {
+      return Promise.resolve(new Response(JSON.stringify({
+        name: "node-libs-browser",
+        version: "2.2.1",
+        main: "index.js",
+        browser: {
+          "assert": "./lib/assert.js",
+          "buffer": "./lib/buffer.js",
+          "console": "./lib/console.js"
+        },
+        dependencies: {},
+        message: "Please run locally for node-libs-browser functionality"
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }
+  }
+  
   // Force no-cors mode for all requests to disable CORS restrictions
   if (typeof options === 'object' && options !== null) {
     options.mode = options.mode || 'no-cors';
@@ -116,6 +219,116 @@ window.fetch = function(url, options = {}) {
     options = { mode: 'no-cors' };
   }
   
+  // Handle unpkg.com requests with fallbacks
+  if (urlStr.includes('unpkg.com/')) {
+    console.log('🔄 Intercepting unpkg.com request:', urlStr);
+    
+    // Extract package name and file from unpkg URL
+    const unpkgMatch = urlStr.match(/unpkg\.com\/([^\/]+)(?:@[^\/]+)?(?:\/(.*))?/);
+    if (unpkgMatch) {
+      const [, packageName, filePath] = unpkgMatch;
+      
+      // Provide fallback responses based on file type
+      if (!filePath || filePath === '' || filePath === 'package.json') {
+        // Package.json request - provide specific fallbacks for known packages
+        let packageInfo = {
+          name: packageName,
+          version: "1.0.0",
+          main: "index.js",
+          dependencies: {},
+          message: "Please run locally for accurate package information"
+        };
+        
+        // Specific handling for node-libs-browser
+        if (packageName.includes('node-libs-browser')) {
+          packageInfo = {
+            name: "node-libs-browser",
+            version: "2.2.1",
+            main: "index.js",
+            browser: {},
+            dependencies: {},
+            description: "Fallback for node-libs-browser - please run locally"
+          };
+        }
+        
+        return Promise.resolve(new Response(JSON.stringify(packageInfo), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+      } else if (filePath.endsWith('.js') || filePath.endsWith('.mjs') || filePath.endsWith('.jsx')) {
+        // JavaScript file request
+        return Promise.resolve(new Response(
+          `console.log("Package ${packageName} not available, using fallback"); export default {};`,
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/javascript' }
+          }
+        ));
+      } else if (filePath.endsWith('.css')) {
+        // CSS file request
+        return Promise.resolve(new Response(
+          `/* Package ${packageName} styles not available */`,
+          {
+            status: 200,
+            headers: { 'Content-Type': 'text/css' }
+          }
+        ));
+      }
+    }
+    
+    // Generic unpkg fallback
+    return Promise.resolve(new Response(JSON.stringify({
+      message: "Please run this locally",
+      instruction: "External packages are not available in offline mode. Please run locally for full functionality.",
+      setup_steps: [
+        "Download the project",
+        "Run: npm install",
+        "Run: npm start",
+        "All packages will be available locally"
+      ]
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    }));
+  }
+
+  // Handle other CDN requests (jsdelivr, cdnjs, etc.)
+  if (urlStr.includes('cdn.jsdelivr.net/') || 
+      urlStr.includes('cdnjs.cloudflare.com/') || 
+      urlStr.includes('unpkg.org/') ||
+      urlStr.includes('esm.sh/') ||
+      urlStr.includes('skypack.dev/')) {
+    
+    console.log('🔄 Intercepting CDN request:', urlStr);
+    
+    // Determine response type based on file extension
+    if (urlStr.includes('.js') || urlStr.includes('.mjs') || urlStr.includes('.jsx') || urlStr.includes('.ts')) {
+      return Promise.resolve(new Response(
+        'console.log("CDN resource not available, using fallback"); export default {};',
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/javascript' }
+        }
+      ));
+    } else if (urlStr.includes('.css')) {
+      return Promise.resolve(new Response(
+        '/* CDN styles not available */',
+        {
+          status: 200,
+          headers: { 'Content-Type': 'text/css' }
+        }
+      ));
+    } else {
+      return Promise.resolve(new Response(JSON.stringify({
+        message: "Please run this locally",
+        instruction: "CDN resources are not available offline. Run locally for full functionality."
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }
+  }
+
   // Block CodeSandbox API calls
   if (urlStr.includes('codesandbox.io/api/') ||
       urlStr.includes('csb.app/api/') ||
@@ -256,8 +469,68 @@ window.fetch = function(url, options = {}) {
     }));
   }
   
-  // Allow other fetch calls (like npm registry)
-  return originalFetch(url, options);
+  // Allow other fetch calls with comprehensive error handling
+  return originalFetch(url, options).catch(error => {
+    console.log('💻 Network request failed for:', urlStr, '- providing fallback response');
+    
+    // Show user-friendly message for dependency failures
+    if (urlStr.includes('dependencies') || 
+        urlStr.includes('node_modules') || 
+        urlStr.includes('package.json') ||
+        urlStr.includes('unpkg.com') ||
+        urlStr.includes('cdn.jsdelivr.net') ||
+        urlStr.includes('skypack.dev')) {
+      showLocalDevelopmentMessage('Could not fetch dependencies');
+    }
+    
+    // Provide appropriate fallback based on URL
+    if (urlStr.endsWith('.js') || urlStr.endsWith('.mjs') || urlStr.endsWith('.jsx')) {
+      // JavaScript file fallback
+      return new Response('console.log("💻 Module not available - please run locally:", "' + urlStr + '"); export default {};', {
+        status: 200,
+        headers: { 'Content-Type': 'application/javascript' }
+      });
+    }
+    
+    if (urlStr.endsWith('.css') || urlStr.includes('fonts.googleapis')) {
+      // CSS file fallback
+      return new Response('/* Stylesheet not available */', {
+        status: 200,
+        headers: { 'Content-Type': 'text/css' }
+      });
+    }
+    
+    if (urlStr.endsWith('.json')) {
+      // JSON file fallback
+      return new Response('{}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (urlStr.includes('/api/') || urlStr.includes('registry')) {
+      // API fallback
+      return new Response(JSON.stringify({
+        message: 'Please run this locally',
+        instruction: 'For full functionality, run this project on your local machine.',
+        setup_steps: [
+          'Download the project',
+          'Run: npm install',
+          'Run: npm start',
+          'Access all features locally'
+        ]
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Generic fallback
+    return new Response('Resource not available', {
+      status: 200,
+      headers: { 'Content-Type': 'text/plain' }
+    });
+  });
 };
 
 // Patch 2: Disable authentication flows
